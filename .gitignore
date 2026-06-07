@@ -31,3 +31,6 @@ Thumbs.db
 
 # SpecStory AI chat transcripts (kept local)
 .specstory/
+
+# TypeScript incremental build info
+*.tsbuildinfo
