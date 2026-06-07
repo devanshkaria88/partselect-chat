@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+scraper/.venv
+scraper/data/*.csv
+.git
+*.log
+**/boot.log

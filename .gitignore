@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node / Next.js (frontend — forthcoming)
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & generated exports
+*.log
+scraper/data/*.csv
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+# Added by code-review-graph
+.code-review-graph/
+
+# SpecStory AI chat transcripts (kept local)
+.specstory/

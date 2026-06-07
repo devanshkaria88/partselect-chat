@@ -1,0 +1,4 @@
+nodriver>=0.38      # un-leaky real-Chrome automation (mints a valid Akamai _abck)
+selectolax>=0.3.21  # fast HTML/microdata parsing
+# Optional, for the scale-up hybrid (see README):
+# curl_cffi>=0.7     # TLS/JA3-impersonating HTTP client for fast cookie reuse

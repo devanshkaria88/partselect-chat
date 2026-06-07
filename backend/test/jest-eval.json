@@ -1,0 +1,11 @@
+{
+  "preset": "ts-jest",
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testMatch": ["<rootDir>/test/eval/**/*.e2e-spec.ts"],
+  "testTimeout": 180000,
+  "maxWorkers": 1,
+  "transform": {
+    "^.+\\.ts$": ["ts-jest", { "tsconfig": "<rootDir>/tsconfig.json" }]
+  }
+}

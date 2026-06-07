@@ -1,0 +1,6 @@
+# Host-run data-prep scripts.
+psycopg2-binary>=2.9      # seed_postgres.py -> Postgres (also baked into docker/seed.Dockerfile)
+
+# Embedding backends for embed.py — install ONE (auto-selected at runtime):
+voyageai>=0.3             # production path: Voyage voyage-3.5 @ 1024-dim (needs VOYAGE_API_KEY)
+# fastembed>=0.4          # offline fallback: BAAI/bge-large-en-v1.5 @ 1024-dim (no key)

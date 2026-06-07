@@ -1,0 +1,20 @@
+{
+  "name": "partselect",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Conversational AI agent for PartSelect (refrigerator & dishwasher parts)",
+  "packageManager": "pnpm@10.15.1",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "eval": "turbo run eval --filter=backend"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}

@@ -1,0 +1,75 @@
+# Dev stack. Boot is fully OFFLINE and DETERMINISTIC: db initializes its schema from
+# db/init/*.sql (fresh volume only), then the one-shot `seed` loads the committed SQLite
+# snapshot. No service on the boot path needs an API key.
+#
+# Phase 1 brings up: db + seed. backend + frontend services are added in later phases.
+name: partselect
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: partselect-pg
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-partselect}
+      POSTGRES_USER: ${POSTGRES_USER:-partselect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-partselect}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro   # runs ONLY on a fresh volume
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-partselect} -d ${POSTGRES_DB:-partselect}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  seed:
+    build:
+      context: .
+      dockerfile: docker/seed.Dockerfile
+    container_name: partselect-seed
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-partselect}:${POSTGRES_PASSWORD:-partselect}@db:5432/${POSTGRES_DB:-partselect}
+      SQLITE_PATH: /data/partselect.db
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./scraper/data:/data:ro
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: partselect-backend
+    depends_on:
+      db:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-partselect}:${POSTGRES_PASSWORD:-partselect}@db:5432/${POSTGRES_DB:-partselect}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      BACKEND_PORT: 3001
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: partselect-frontend
+    depends_on:
+      - backend
+    environment:
+      INTERNAL_API_URL: http://backend:3001
+      PORT: 3000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  pgdata:
