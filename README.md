@@ -122,6 +122,40 @@ make down     # stop the stack
 make reset    # drop the volume + rebuild + reseed (after a schema or snapshot change)
 ```
 
+### (Optional) Regenerate the dataset from source
+
+> You do **not** need this to run the project. The catalog snapshot
+> (`scraper/data/partselect.db`, 225 parts with compatibility, install guides, symptoms,
+> and embeddings) is committed, and `make up` seeds Postgres straight from it. This
+> section is only for refreshing or rebuilding that snapshot from the live site.
+
+The scraper and embedder run on the **host**, not in Docker, because the crawler drives a
+real Chrome to get past Akamai Bot Manager. Prerequisites:
+
+- **Python 3.10+** (a 3.12 venv is what we use), plus a real Chrome/Chromium for `nodriver`.
+- A residential network connection (datacenter IPs get blocked by Akamai).
+- For embeddings, a `VOYAGE_API_KEY` in `.env`. No key? `embed.py` falls back to a local
+  `fastembed` model automatically (install `fastembed` instead of `voyageai`).
+
+```bash
+# 1. set up the scraper venv (once)
+cd scraper
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+cd ..
+
+# 2. refresh the snapshot, then re-seed Postgres from it
+make scrape   # re-crawl + enrich product pages → scraper/data/partselect.db
+make embed    # write Voyage (or fastembed) vectors into the snapshot
+make reset    # drop the volume and reseed Postgres from the refreshed snapshot
+```
+
+Heads up: scraping is slow by design (randomized delays to stay polite and avoid `403`s),
+and Akamai rotates its bot-detection script, so the crawler needs occasional re-tuning.
+That fragility is exactly why the snapshot is committed and kept off the boot path. See
+[`scraper/README.md`](./scraper/README.md) for crawl flags, escalation tips, and the
+start-small feasibility test.
+
 ---
 
 ## The three canonical journeys
