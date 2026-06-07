@@ -10,7 +10,7 @@ Part of the [PartSelect monorepo](../README.md). It speaks to the
 through [`@partselect/types`](../packages/README.md).
 
 ```
-Stack: Next.js 15 (App Router) · React 19 · Zustand · Tailwind
+Stack: Next.js 16 (App Router, Turbopack) · React 19 · Zustand · Tailwind
 Runs on: http://localhost:3000
 ```
 

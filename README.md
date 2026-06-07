@@ -188,6 +188,12 @@ dedicated session columns, so they survive after older turns slide out of the wi
 latency, tokens, cache reads, model tier, scope verdict, and timings. `GET
 /debug/trace/:turnId` returns it.
 
+**API docs.** The REST surface is documented with OpenAPI via `@nestjs/swagger`. With the
+backend running, Swagger UI is at `http://localhost:3001/docs` (raw spec at `/docs-json`).
+The shared `@partselect/types` package stays the compile-time contract for the in-repo
+frontend and the SSE stream; OpenAPI documents the HTTP boundary for any other consumer.
+See the [backend guide](./backend/README.md) for the reasoning.
+
 The [backend guide](./backend/README.md) goes deeper on the loop, the tool pattern, and
 the scope router. The [frontend guide](./frontend/README.md) covers the SSE streaming and
 the block renderer.
@@ -268,8 +274,9 @@ db/init/    Postgres schema DDL (extensions + tables), the single owner of the s
 docker/     seed image and the docker-compose stack (db · seed · backend · frontend)
 ```
 
-**Stack:** Next.js 15, NestJS 11, Postgres 16 with pgvector, `@anthropic-ai/sdk` (Claude
-Opus 4.8, Sonnet 4.6, Haiku 4.5), Voyage `voyage-3.5`, pnpm with Turborepo, and Docker.
+**Stack:** Next.js 16, NestJS 11 with `@nestjs/swagger` (OpenAPI), Postgres 16 with
+pgvector, `@anthropic-ai/sdk` (Claude Opus 4.8, Sonnet 4.6, Haiku 4.5), Voyage
+`voyage-3.5`, pnpm with Turborepo, and Docker.
 
 A note on the data layer: the backend uses `pg` (node-postgres) directly rather than an
 ORM. The hybrid vector and trigram retrieval is raw SQL by nature, the rest is simple

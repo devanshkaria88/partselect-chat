@@ -9,7 +9,7 @@ Part of the [PartSelect monorepo](../README.md). It shares its types with the
 [frontend](../frontend/README.md) through [`@partselect/types`](../packages/README.md).
 
 ```
-Stack: NestJS 11 · @anthropic-ai/sdk (Claude) · pg (node-postgres) · Postgres 16 + pgvector · Jest
+Stack: NestJS 11 · @nestjs/swagger (OpenAPI) · @anthropic-ai/sdk (Claude) · pg (node-postgres) · Postgres 16 + pgvector · Jest
 Runs on: http://localhost:3001
 ```
 
@@ -87,7 +87,7 @@ graph TD
 
     Chat --> Agent[AgentModule]
     Chat --> Cat[CatalogModule]
-    Chat -.controllers.-> Ctrls[ChatController<br/>ApiController]
+    Chat -.controllers.-> Ctrls[ChatController<br/>CatalogController<br/>ApiController]
 
     Agent --> Tools[ToolsModule]
     Agent --> Scope[ScopeModule]
@@ -198,6 +198,38 @@ This is how you answer "why did it do that" without adding print statements.
 
 ---
 
+## API documentation (OpenAPI / Swagger)
+
+The REST surface is documented with `@nestjs/swagger`. Boot the backend and open:
+
+```
+Swagger UI:  http://localhost:3001/docs
+Raw spec:    http://localhost:3001/docs-json
+```
+
+Ten operations across four tags: `chat` (the SSE turn), `catalog` (products, facets),
+`cart` (view, add, set-qty, checkout), and `system` (health, session, trace).
+
+**Why both Swagger and shared types?** They cover different boundaries, on purpose.
+
+- `@partselect/types` is the contract between the NestJS API and the Next.js app. Because
+  both are TypeScript in one workspace, a shared package gives a *compile-time* guarantee:
+  change a field and both sides stop building. That is stronger than codegen'd OpenAPI
+  clients, which can silently drift.
+- OpenAPI documents the *HTTP* boundary (routes, status codes, request and response
+  shapes) for any consumer that is not the in-repo frontend: a future mobile client, a
+  partner, or a non-TypeScript service.
+
+The DTOs live in `src/http/dto.ts`. They are never instantiated; they exist only to carry
+the `@ApiProperty` metadata Swagger reads (TypeScript interfaces are erased at runtime, so
+the shared types can't carry it themselves). Each DTO `implements` its `@partselect/types`
+interface, so the documented schema cannot drift from the real contract without failing
+the build. The streaming `POST /agent/chat` endpoint is the one place OpenAPI is weak (it
+can't model an SSE stream), so it is documented as a `text/event-stream` response whose
+body is the `oneOf` of the six `ChatEvent` frame shapes.
+
+---
+
 ## Directory map
 
 ```
@@ -217,6 +249,8 @@ src/
     tools.module.ts       the TOOLS roster (add a capability here)
     impl/                 one file per capability
   catalog/                part lookup, search, storefront grid, facets
+                          + CatalogController (GET /catalog/*)
+  http/dto.ts             OpenAPI/Swagger DTOs mirroring @partselect/types
   compatibility/          deterministic part ↔ model table lookup
   install/                how-to video + repair narratives
   troubleshoot/           symptom retrieval via pgvector
@@ -225,7 +259,7 @@ src/
   db/                     pg pool, raw SQL (no ORM by design)
   embeddings/             Voyage voyage-3.5 vectors
   traces/                 agent_traces writer + reader
-  chat/                   ChatController (SSE) + ApiController (catalog, health, trace)
+  chat/                   ChatController (SSE) + ApiController (health, session, trace)
 
 test/eval/                canonical · scope · groundedness specs (make eval)
 ```

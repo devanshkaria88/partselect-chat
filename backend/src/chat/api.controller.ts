@@ -1,50 +1,41 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, Query } from '@nestjs/common';
-import { CatalogService } from '../catalog/catalog.service';
+import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SessionService } from '../session/session.service';
 import { TracesService } from '../traces/traces.service';
+import { OkDto, SessionClearDto, TraceRecordDto } from '../http/dto';
 
-/** Catalog (storefront grid), session, health, and the trace-inspection endpoint. */
+/** System endpoints: health, session reset, and the trace-inspection endpoint. */
+@ApiTags('system')
 @Controller()
 export class ApiController {
   constructor(
-    private readonly catalog: CatalogService,
     private readonly session: SessionService,
     private readonly traces: TracesService,
   ) {}
 
   @Get('health')
+  @ApiOperation({ summary: 'Liveness probe' })
+  @ApiOkResponse({ type: OkDto })
   health() {
     return { ok: true };
   }
 
-  @Get('catalog/products')
-  async products(
-    @Query('appliance') appliance?: string,
-    @Query('brand') brand?: string,
-    @Query('offset') offset?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const items = await this.catalog.listForStorefront({
-      appliance,
-      brand,
-      offset: offset ? Number(offset) : 0,
-      limit: limit ? Number(limit) : 24,
-    });
-    return { items };
-  }
-
-  @Get('catalog/facets')
-  facets() {
-    return this.catalog.facets();
-  }
-
   @Post('session/clear')
-  async clearSession(@Body('session_id') sessionId: string) {
-    if (sessionId) await this.session.clear(sessionId);
+  @ApiOperation({ summary: 'Clear a session', description: 'Wipes messages, cart, and the captured model number for the given session.' })
+  @ApiOkResponse({ type: OkDto })
+  async clearSession(@Body() body: SessionClearDto) {
+    if (body?.session_id) await this.session.clear(body.session_id);
     return { ok: true };
   }
 
   @Get('debug/trace/:turnId')
+  @ApiOperation({
+    summary: 'Fetch the trace for one turn',
+    description: 'Returns the agent_traces row: tools, args, per-step latency, tokens, cache reads, model tier, scope verdict, and timings.',
+  })
+  @ApiParam({ name: 'turnId', description: 'The turn_id from a meta frame' })
+  @ApiOkResponse({ type: TraceRecordDto })
+  @ApiNotFoundResponse({ description: 'trace not found' })
   async trace(@Param('turnId') turnId: string) {
     const row = await this.traces.get(turnId);
     if (!row) throw new NotFoundException('trace not found');
